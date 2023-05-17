@@ -51,8 +51,28 @@ contract Exchange is ERC20 {
         return(ethAmount, tokenAmount);
     }
 
-    function getAmount(uint inputReserve, uint outputReserve) public returns(uint){
-
+    function getAmount(uint inputAmount, uint inputReserve, uint outputReserve)pure public returns(uint){
+        require(inputReserve>0 && outputReserve>0, "Invalid input and Output Reserve");
+        uint finalInputAmount = ((inputAmount) * 99)/ 100;
+        uint numerator = outputReserve * finalInputAmount;
+        uint denominator = outputReserve + finalInputAmount;
+        return numerator/denominator;
     }
-    
+
+    function swapEthToToken(uint _minTokens) payable public{
+        // require(inputAmount > 0, "Amount should be Greater than ZERO!");
+        uint ethReserve = address(this).balance - msg.value;
+        uint tokenReserve = getReserve();
+        uint exchangeAmount = getAmount(msg.value, ethReserve, tokenReserve);
+        require(exchangeAmount >= _minTokens, "insuffient output Amount");
+        ERC20(cryptoDevTokenAddress).transfer(msg.sender, exchangeAmount);
+    }
+    function swapTokenToEth(uint _tokenSold, uint _minEth) public{
+        uint ethReserve = address(this).balance;
+        uint tokenReserve = getReserve();
+        uint exchangeAmount = getAmount(_tokenSold, tokenReserve, ethReserve);
+        require(exchangeAmount >= _minEth, "Insufficient output Amount");
+        ERC20(cryptoDevTokenAddress).transferFrom(msg.sender, address(this), _tokenSold);
+        payable(msg.sender).transfer(exchangeAmount);
+    }
 }
