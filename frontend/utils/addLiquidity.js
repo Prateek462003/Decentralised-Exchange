@@ -19,9 +19,30 @@ export const addLiquidity = async(signer, addCDAmountWei, addEtherAmountWei)=>{
             EXCHANGE_CONTRACT_ABI,
             signer
         );
-
         
+        let tx = await tokenContract.approve(
+            EXCHANGE_CONTRACT_ADDRESS,
+            addCDAmountWei.toString()
+        );
+        await tx.wait();
+        tx = await exchangeContract.addLiquidity(addCDAmountWei,{
+            value:addEtherAmountWei,
+        });
+        await tx.wait();
+
     }catch(err){
         console.error(err);
     }
 }
+
+
+
+export const calculateCD = async(_addEther = "0", etherBalanceContract, cdTokenReserve)=>{
+    const etheramount = utils.parseEther(_addEther);
+
+    const cdToken = etheramount.mul(cdTokenReserve).div(etherBalanceContract);
+    return cdToken;
+
+}
+
+
