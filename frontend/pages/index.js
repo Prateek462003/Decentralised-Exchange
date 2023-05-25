@@ -25,9 +25,27 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [walletConnect, setWalletConnect] = useState(false);
   const web3ModalRef = useRef();
-  const _addLiquidity = async() =>{
-    
+
+  const _addLiquidity = async()=>{
+    try{
+      const addEtherAmount = utils.parseEther(addEther.toString());
+      if(!addCDTokens.eq(zero) && !addEtherAmount.eq(zero)){
+        const signer = await getProviderOrSigner(true);
+        setLoading(true);
+        await addLiquidity(signer, addCDTokens, addEtherAmount);
+        setLoading(false);
+        setAddCDTokens(zero);
+        await getAmmounts();
+      }else{  
+        setAddCDTokens(zero);
+      }
+    }catch(err){
+      console.error(err);
+      setLoading(false);
+      setAddCDTokens(zero);
+    }
   }
+
   const getAmmounts = async()=>{
     try{  
       const provider = await getProviderOrSigner(false);
@@ -88,8 +106,29 @@ export default function Home() {
             </div>
           ):
           (
-
+            <div>
+              <input 
+              type="number" 
+              placeholder='Enter The Eth Amount'
+              onChange={async(e)=>{
+                setAddEther(e.target.value || "0");
+                const _addCDTokens = await calculateCD(e.target.value || "0", ethBalanceContract, reservedCD);
+                setAddCDTokens(_addCDTokens);
+                }} 
+                className={styles.input}
+              />
+              <div className={styles.inputDiv}>
+                {`You will need ${utils.formatEther(addCDTokens)} CRYPTO DEV TOKENS`}
+              </div>
+              <button className={styles.button1} onClick={_addLiquidity}>
+                Add
+              </button>
+            </div>
           )}
+          <div className={styles.description}>
+            <input type="number" 
+            placeholder="Enter the number of LP Tokens"/>
+          </div>
         </div>
         </>
       );
